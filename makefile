@@ -25,3 +25,7 @@ sort:
 .PHONY: note
 note:
 	poetry run jupyter lab
+
+.PHONY: requirements
+requirements:
+	poetry export --without-hashes -f requirements.txt -o requirements.txt
