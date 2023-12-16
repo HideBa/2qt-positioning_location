@@ -1,5 +1,5 @@
-import sqlite3
 import csv
+import sqlite3
 
 # Replace with your SQLite .db file and the table you want to export
 db_file = "./1st_ass/nmea3.db"

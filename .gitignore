@@ -120,5 +120,4 @@ dmypy.json
 *.db
 *.csv
 *.log
-*.txt
 *.png

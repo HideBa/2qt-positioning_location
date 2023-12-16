@@ -1,7 +1,7 @@
-from matplotlib.ticker import ScalarFormatter
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from matplotlib.ticker import ScalarFormatter
 
 
 def plot(title, df):

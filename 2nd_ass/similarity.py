@@ -1,9 +1,10 @@
 import os
-from matplotlib import pyplot as plt
+
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
 import seaborn as sns
+from matplotlib import pyplot as plt
 from sklearn.manifold import MDS
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 def read_access_point(dir_path, ssid="eduroam"):
