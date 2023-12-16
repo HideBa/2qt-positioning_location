@@ -80,14 +80,17 @@ def find_similar_room(room_name, data_dir="./2nd_ass/data", outdir="./2nd_ass/re
     data_dict = read_access_point(data_dir)
     signal_strength_stat = calc_statistics_each_macaddress(data_dict)
     similarity_df = calculate_cosine_similarity(signal_strength_stat)
-    plot_similarity_heatmap(similarity_df, outdir)
-    plot_3d_room_positions(similarity_df, outdir)
+    fig_sim = plot_similarity_heatmap(similarity_df)
+    fig_3d = plot_3d_room_positions(similarity_df)
     sorted_similarity = sort_by_similarity(similarity_df[room_name])
-    plot_similarity_table(sorted_similarity, outdir)
+    fig_table = plot_similarity_table(sorted_similarity)
+    save_figures(
+        [["similarity", fig_sim], ["3dmap", fig_3d], ["table", fig_table]], outdir
+    )
     return sorted_similarity
 
 
-def plot_similarity_table(similarity_series, outdir):
+def plot_similarity_table(similarity_series):
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.axis("off")
     ax.table(
@@ -100,25 +103,24 @@ def plot_similarity_table(similarity_series, outdir):
         cellColours=plt.cm.RdYlGn(similarity_series.values.reshape(-1, 1)),
     )
     plt.title("Similarity Table")
-    plt.savefig("{}/table.png".format(outdir))
-    # plt.show()
+    # plt.savefig("{}/table.png".format(outdir))
+    return fig
 
 
 def plot_similarity_heatmap(
     similarity_df,
-    outdir,
     title="similarity!",
 ):
-    plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(10, 8))
     sns.heatmap(similarity_df, annot=True, cmap="coolwarm", fmt=".1f")
     plt.title(title)
     plt.xlabel("Rooms")
     plt.ylabel("Rooms")
-    plt.savefig("{}/heatmap.png".format(outdir))  # Save the figure as "heatmap.png"
-    # plt.show()
+    # plt.savefig("{}/heatmap.png".format(outdir))
+    return fig
 
 
-def plot_3d_room_positions(similarity_df, outdir):
+def plot_3d_room_positions(similarity_df):
     distance_matrix = 1 - similarity_df
 
     mds = MDS(n_components=3, dissimilarity="precomputed", random_state=42)
@@ -132,8 +134,13 @@ def plot_3d_room_positions(similarity_df, outdir):
         ax.text(x, y, z, room)
 
     plt.title("Room Position based on WiFi Fingerprint Similarity")
-    plt.savefig("{}/3dmap.png".format(outdir))
-    # plt.show()
+    # plt.savefig("{}/3dmap.png".format(outdir))
+    return fig
+
+
+def save_figures(figs, outdir):
+    for [fname, fig] in figs:
+        fig.savefig("{}/{}.png".format(outdir, fname))
 
 
 def main():
