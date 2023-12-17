@@ -84,14 +84,14 @@ def find_similar_room(room_name, data_dir="./2nd_ass/data", outdir="./2nd_ass/re
     fig_sim = plot_similarity_heatmap(similarity_df)
     fig_3d = plot_3d_room_positions(similarity_df)
     sorted_similarity = sort_by_similarity(similarity_df[room_name])
-    fig_table = plot_similarity_table(sorted_similarity)
+    fig_table = plot_similarity_table(sorted_similarity, "example")
     save_figures(
         [["similarity", fig_sim], ["3dmap", fig_3d], ["table", fig_table]], outdir
     )
     return sorted_similarity
 
 
-def plot_similarity_table(similarity_series):
+def plot_similarity_table(similarity_series, roomname):
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.axis("off")
     ax.table(
@@ -103,7 +103,7 @@ def plot_similarity_table(similarity_series):
         colWidths=[0.2],
         cellColours=plt.cm.RdYlGn(similarity_series.values.reshape(-1, 1)),
     )
-    plt.title("Similarity Table")
+    plt.title("Similarity Table (room: {})".format(roomname))
     # plt.savefig("{}/table.png".format(outdir))
     return fig
 
