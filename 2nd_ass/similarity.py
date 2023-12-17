@@ -5,6 +5,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.manifold import MDS
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import NearestNeighbors
+import plotly.graph_objects as go
 
 
 def read_access_point(dir_path, ssid="eduroam"):
@@ -69,6 +71,32 @@ def calculate_cosine_similarity(fingerprint_dict):
     return similarity_df
 
 
+def calculate_knn_similarity(fingerprint_dict):
+    mac_address = set()
+    for df in fingerprint_dict.values():
+        mac_address.update(df.index)
+    mac_address = sorted(mac_address)
+
+    for room_name, df in fingerprint_dict.items():
+        fingerprint_dict[room_name] = df.reindex(mac_address).fillna(0)
+
+    vectors = {room_name: df.values for room_name, df in fingerprint_dict.items()}
+    room_names = list(fingerprint_dict.keys())
+    X = [vectors[room] for room in room_names]
+
+    print("X shape: ", len(X), len(X[0]))
+    # Calculate KNN similarity
+    nbrs = NearestNeighbors(metric="cosine", algorithm="brute")
+    nbrs.fit(X)
+    distances, indices = nbrs.kneighbors(X)
+
+    similarity_matrix = 1 - distances
+    similarity_df = pd.DataFrame(
+        similarity_matrix, index=room_names, columns=room_names
+    )
+    return similarity_df
+
+
 def sort_by_similarity(similarity_series, top_n=20):
     sorted_similarities = similarity_series.sort_values(ascending=False)
     sorted_similarities = sorted_similarities.drop(
@@ -81,13 +109,27 @@ def find_similar_room(room_name, data_dir="./2nd_ass/data", outdir="./2nd_ass/re
     data_dict = read_access_point(data_dir)
     signal_strength_stat = calc_statistics_each_macaddress(data_dict)
     similarity_df = calculate_cosine_similarity(signal_strength_stat)
-    fig_sim = plot_similarity_heatmap(similarity_df)
-    fig_3d = plot_3d_room_positions(similarity_df)
+    # knn_similarity_df = calculate_knn_similarity(signal_strength_stat)
+
+    # fig_sim = plot_similarity_heatmap(similarity_df)
+    # fig_3d = plot_3d_room_positions(similarity_df)
+    fig_3d_interactive = plot_3d_room_positions_interactive(similarity_df)
+    fig_3d_interactive.show()
     sorted_similarity = sort_by_similarity(similarity_df[room_name])
-    fig_table = plot_similarity_table(sorted_similarity, "example")
-    save_figures(
-        [["similarity", fig_sim], ["3dmap", fig_3d], ["table", fig_table]], outdir
-    )
+    # fig_table = plot_similarity_table(sorted_similarity, room_name)
+
+    # fig_table_knn = plot_similarity_table(
+    #     sort_by_similarity(knn_similarity_df[room_name]), room_name
+    # )
+    # save_figures(
+    #     [
+    #         ["similarity", fig_sim],
+    #         ["3dmap", fig_3d],
+    #         ["table", fig_table],
+    #         # ["table_knn", fig_table_knn],
+    #     ],
+    #     outdir,
+    # )
     return sorted_similarity
 
 
@@ -136,6 +178,37 @@ def plot_3d_room_positions(similarity_df):
 
     plt.title("Room Position based on WiFi Fingerprint Similarity")
     # plt.savefig("{}/3dmap.png".format(outdir))
+    return fig
+
+
+def plot_3d_room_positions_interactive(similarity_df):
+    distance_matrix = 1 - similarity_df
+
+    mds = MDS(n_components=3, dissimilarity="precomputed", random_state=42)
+    coords = mds.fit_transform(distance_matrix)
+
+    # Create a Plotly figure
+    fig = go.Figure()
+
+    # Add 3D scatter plot
+    fig.add_trace(
+        go.Scatter3d(
+            x=coords[:, 0],
+            y=coords[:, 1],
+            z=coords[:, 2],
+            mode="markers+text",  # Combine scatter and text in one trace
+            text=similarity_df.index,  # Text labels
+            marker=dict(size=5, opacity=0.8),
+        )
+    )
+
+    # Update layout for a better view
+    fig.update_layout(
+        title="Room Position based on WiFi Fingerprint Similarity",
+        scene=dict(xaxis_title="X Axis", yaxis_title="Y Axis", zaxis_title="Z Axis"),
+        margin=dict(l=0, r=0, b=0, t=0),  # Adjust margins
+    )
+
     return fig
 
 
