@@ -121,3 +121,7 @@ dmypy.json
 *.csv
 *.log
 *.png
+*/qgis
+*/data
+!/data/nmea.geojson
+!/data/rkt.geojson
