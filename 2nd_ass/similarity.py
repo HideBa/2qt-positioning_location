@@ -97,7 +97,7 @@ def calculate_knn_similarity(fingerprint_dict):
     return similarity_df
 
 
-def sort_by_similarity(similarity_series, top_n=20):
+def sort_by_similarity(similarity_series, top_n=10):
     sorted_similarities = similarity_series.sort_values(ascending=False)
     sorted_similarities = sorted_similarities.drop(
         sorted_similarities.index[0]
@@ -111,30 +111,42 @@ def find_similar_room(room_name, data_dir="./2nd_ass/data", outdir="./2nd_ass/re
     similarity_df = calculate_cosine_similarity(signal_strength_stat)
     # knn_similarity_df = calculate_knn_similarity(signal_strength_stat)
 
-    # fig_sim = plot_similarity_heatmap(similarity_df)
-    # fig_3d = plot_3d_room_positions(similarity_df)
-    fig_3d_interactive = plot_3d_room_positions_interactive(similarity_df)
-    fig_3d_interactive.show()
+    fig_sim = plot_similarity_heatmap(similarity_df)
+    fig_3d = plot_3d_room_positions(similarity_df)
+    # fig_3d_interactive = plot_3d_room_positions_interactive(similarity_df)
+    # fig_3d_interactive.show()
     sorted_similarity = sort_by_similarity(similarity_df[room_name])
     # fig_table = plot_similarity_table(sorted_similarity, room_name)
 
     # fig_table_knn = plot_similarity_table(
     #     sort_by_similarity(knn_similarity_df[room_name]), room_name
     # )
-    # save_figures(
-    #     [
-    #         ["similarity", fig_sim],
-    #         ["3dmap", fig_3d],
-    #         ["table", fig_table],
-    #         # ["table_knn", fig_table_knn],
-    #     ],
-    #     outdir,
-    # )
+    # snapshot_rooms = [
+    #     "shot_coffee_corner",
+    #     "shot_geolab",
+    #     "shot_hallm",
+    #     "shot_stairway_hallu",
+    #     "hallr",
+    # ]
+    # for room in snapshot_rooms:
+    #     sorted_similarity = sort_by_similarity(similarity_df[room])
+    #     fig_table = plot_similarity_table(sorted_similarity, room)
+    #     save_figures([[room, fig_table]], outdir)
+    save_figures(
+        [
+            ["similarity", fig_sim],
+            ["3dmap", fig_3d],
+            # ["table", fig_table],
+            # ["table_knn", fig_table_knn],
+        ],
+        outdir,
+    )
+
     return sorted_similarity
 
 
 def plot_similarity_table(similarity_series, roomname):
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6, 3))
     ax.axis("off")
     ax.table(
         cellText=similarity_series.round(2).values.reshape(-1, 1),
@@ -145,17 +157,19 @@ def plot_similarity_table(similarity_series, roomname):
         colWidths=[0.2],
         cellColours=plt.cm.RdYlGn(similarity_series.values.reshape(-1, 1)),
     )
-    plt.title("Similarity Table (room: {})".format(roomname))
-    # plt.savefig("{}/table.png".format(outdir))
+    plt.title("Similarity Table (room: {})".format(roomname), loc="left")
     return fig
 
 
 def plot_similarity_heatmap(
     similarity_df,
-    title="similarity!",
+    title="Wifi fingerprint similarity",
 ):
-    fig = plt.figure(figsize=(10, 8))
-    sns.heatmap(similarity_df, annot=True, cmap="coolwarm", fmt=".1f")
+    fig = plt.figure(figsize=(20, 16))
+    sns.heatmap(
+        similarity_df,
+        cmap="rocket",
+    )
     plt.title(title)
     plt.xlabel("Rooms")
     plt.ylabel("Rooms")
@@ -196,10 +210,11 @@ def plot_3d_room_positions_interactive(similarity_df):
             x=coords[:, 0],
             y=coords[:, 1],
             z=coords[:, 2],
+            name="Estimated relative distance of rooms",
             mode="markers+text",  # Combine scatter and text in one trace
             text=similarity_df.index,  # Text labels
             marker=dict(size=5, opacity=0.8),
-        )
+        ),
     )
 
     # Update layout for a better view
